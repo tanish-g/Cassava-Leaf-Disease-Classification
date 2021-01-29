@@ -7,6 +7,7 @@ class hparams():
                 "seed":42,
                 "optimizer" : torch.optim.AdamW,
                 "frac":0.1,
+                "model_name":'efficientnet-b0',
                 "scheduler" : torch.optim.lr_scheduler.CosineAnnealingLR,
                 "scheduler_params" : {'T_max' :20, 'eta_min':1e-6, 'last_epoch':-1, 'verbose':True},
                 "fold":0,
