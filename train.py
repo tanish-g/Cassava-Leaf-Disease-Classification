@@ -23,7 +23,9 @@ train_tfms = get_augmentations.train_tfms()
 test_tfms = get_augmentations.test_tfms()
 
 df=pd.read_csv(hyparam['csv_file'])
-train_df,val_df=split(df)
+train_df,valid_df=split(df)
+train_df=train_df.sample(frac=hyparam['frac']).reset_index(drop=True)
+valid_df=valid_df.sample(frac=hyparam['frac']).reset_index(drop=True)
 def seed_everything(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
