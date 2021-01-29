@@ -1,0 +1,8 @@
+pandas_path
+albumentations
+efficientnet-pytorch
+PyYAML
+timm
+pytorch_ranger
+fastprogress
+yagmail
