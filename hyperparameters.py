@@ -6,11 +6,12 @@ class hparams():
     return {
                 "seed":42,
                 "optimizer" : torch.optim.AdamW,
-                "frac":0.1
+                "frac":0.1,
                 "scheduler" : torch.optim.lr_scheduler.CosineAnnealingLR,
                 "scheduler_params" : {'T_max' :20, 'eta_min':1e-6, 'last_epoch':-1, 'verbose':True},
                 "fold":0,
                 "lr": 2e-4,
+                "weight_decay": 1e-4
                 "csv_file":"/content/cassava_splits/naive_folds.csv",
                 "loss_fn_train":torch.nn.CrossEntropyLoss, #if cutmix is true CutMixCrossEntropyLoss(True)
                 "loss_fn_val":torch.nn.CrossEntropyLoss,
