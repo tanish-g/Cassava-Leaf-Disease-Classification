@@ -1,3 +1,4 @@
+import sys
 from PIL import Image
 import torch
 import pandas as pd
@@ -19,13 +20,14 @@ from hyperparameters import hparams
 from get_train_val_split import split
 
 hyparam=hparams.params()
-train_tfms = get_augmentations.train_tfms()
-test_tfms = get_augmentations.test_tfms()
+train_tfms = get_augmentations(img_size=128).train_tfms()
+test_tfms = get_augmentations(img_size=128).test_tfms()
 
 df=pd.read_csv(hyparam['csv_file'])
-train_df,valid_df=split(df)
+train_df,valid_df=split(df).get_train_val_split()
 train_df=train_df.sample(frac=hyparam['frac']).reset_index(drop=True)
 valid_df=valid_df.sample(frac=hyparam['frac']).reset_index(drop=True)
+
 def seed_everything(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -67,7 +69,7 @@ def validation_step(xb,yb,model,loss_fn,device):
     _, out = torch.max(out, 1)
     return loss.item(),out
 
-def get_data(train_df,valid_df,train_tfms,test_tfms,bs):
+def get_data(train_df,valid_df,train_tfms,test_tfms):
     train_ds = leafDataset(df=train_df,im_path=hyparam['image_loading_path'],transforms=train_tfms)
     if hyparam['Cutmix']==True:
       train_ds = CutMix(train_ds, num_class=hyparam['num_class'], beta=hyparam['beta'], prob=hyparam['prob'], num_mix=hyparam['num_mix'])
@@ -76,7 +78,7 @@ def get_data(train_df,valid_df,train_tfms,test_tfms,bs):
     valid_dl = DataLoader(dataset=valid_ds,batch_size=hyparam['batch_size'],shuffle=False,num_workers=hyparam['num_workers'])
     return train_dl,valid_dl
 
-def fit(epochs=hyparam['max_epochs'],model,train_dl,valid_dl,opt,device=None,loss_fn_train=hyparam['loss_fn_train'],loss_fn_val=hyparam['loss_fn_val'],checkpoint=hyparam['checkpoint'],loading_path=hyparam['loading_path'],saving_path=hyparam['saving_path']):
+def fit(epochs=hyparam['max_epochs'],model=None,train_dl=None,valid_dl=None,opt=None,device=None,loss_fn_train=hyparam['loss_fn_train'],loss_fn_val=hyparam['loss_fn_val'],checkpoint=hyparam['checkpoint'],loading_path=hyparam['loading_path'],saving_path=hyparam['saving_path']):
     device = device if device else get_device()
     scheduler = hyparam['scheduler'](opt,T_max=hyparam['scheduler_params']['T_max'],eta_min=hyparam['scheduler_params']['eta_min'])
     if checkpoint:
@@ -92,13 +94,13 @@ def fit(epochs=hyparam['max_epochs'],model,train_dl,valid_dl,opt,device=None,los
         ##Training
         model.train()
         for xb,yb in progress_bar(train_dl,parent=mb):
-            trn_loss += training_step(xb,yb,model,loss_fn1,opt,device,scheduler)
+            trn_loss += training_step(xb,yb,model,loss_fn_train,opt,device,scheduler)
         trn_loss /= mb.child.total
         ##Validation
         model.eval()
         with torch.no_grad():
             for i,(xb,yb) in enumerate(progress_bar(valid_dl,parent=mb)):
-                loss,out = validation_step(xb,yb,model,loss_fn,device)
+                loss,out = validation_step(xb,yb,model,loss_fn_val,device)
                 val_loss += loss
                 val_preds.extend(out.detach().cpu().numpy())
                 val_targets.extend(yb.detach().cpu().numpy())
@@ -107,20 +109,19 @@ def fit(epochs=hyparam['max_epochs'],model,train_dl,valid_dl,opt,device=None,los
         scheduler.step(val_acc)
         if val_acc>best_acc:
             best_acc=val_acc
-            torch.save(model.state_dict(),f'{saving_path}.pth')
-        torch.save({'model_state_dict':model.state_dict(),'scheduler_state_dict':scheduler.state_dict(),'optimizer_state_dict':opt.state_dict(),'val_loss':val_loss},f'{saving_path}_last.pth')
+            torch.save(model.state_dict(),f'model.pth')
+        torch.save({'model_state_dict':model.state_dict(),'scheduler_state_dict':scheduler.state_dict(),'optimizer_state_dict':opt.state_dict(),'val_loss':val_loss},f'model_last.pth')
         print(f'Epoch: {epoch},Train_loss: {trn_loss:.5f},Val_loss:{val_loss:.5f} Val_accuracy:{val_acc:.4f}')
-        with open(f'{saving_path}.txt','a+') as f:
+        with open(f'log.txt','a+') as f:
             f.writelines(f'Epoch: {epoch},Train_loss: {trn_loss:.5f} Val_loss:{val_loss:.5f} Val_accuracy:{val_acc:.4f}\n')
     import yagmail
     sendtome = ['tanishgupta34@gmail.com']
-    contents = open(f'{saving_path}.txt').readlines()
+    contents = open(f'log.txt').readlines()
     yag = yagmail.SMTP(user = 'labsc202@gmail.com' , password = 'labelsmooth1')
     yag.send(to = sendtome , subject = 'Knock Knock Model has trained !!',contents = contents ,attachments=['log.txt','logger.txt'])
     return model
 
-train_tfms,test_tfms = get_augmentations(p=0.5)
-train_dl,valid_dl = get_data(train_df,valid_df,train_tfms,test_tfms,bs)
+train_dl,valid_dl = get_data(train_df,valid_df,train_tfms,test_tfms)
 model,opt = get_model(model_name='efficientnet-b3',lr=hyparam['lr'],wd=hyparam['weight_decay'])
 
-model = fit(model,train_dl,valid_dl,opt)
+model = fit(model=model,train_dl=train_dl,valid_dl=valid_dl,opt=opt)
