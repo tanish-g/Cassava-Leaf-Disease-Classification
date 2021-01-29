@@ -1,4 +1,6 @@
 from efficientnet_pytorch import EfficientNet
+import torch.nn as nn
+import torch.nn.functional as F
 class leafEfficientNet(nn.Module):
     def __init__(self,model_name='efficientnet-b0',pool_type=F.adaptive_avg_pool2d):
         super().__init__()
