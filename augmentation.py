@@ -6,7 +6,7 @@ class get_augmentations():
       self.image_size=img_size
   def train_tfms(self):
     return A.Compose([
-                  A.RandomSizedCrop(min_max_height=(128,384),height=384,width=384,p=0.5),
+                  A.RandomSizedCrop(min_max_height=(128,self.image_size),height=self.image_size,width=self.image_size,p=0.5),
                   A.Resize(self.image_size, self.image_size,always_apply=True,p=1.0), 
                   # A.Blur(blur_limit=7,p=0.5),
                   # A.MotionBlur(blur_limit=67,p=0.5),
@@ -36,6 +36,6 @@ class get_augmentations():
                   ])
   def test_tfms(self):
       return A.Compose([
-          A.Resize(image_size, image_size),                  
+          A.Resize(self.image_size, self.image_size),                  
           ToTensor(normalize=imagenet_stats)
           ])
