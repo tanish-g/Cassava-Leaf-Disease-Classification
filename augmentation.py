@@ -37,5 +37,5 @@ class get_augmentations():
   def test_tfms(self):
       return A.Compose([
           A.Resize(self.image_size, self.image_size),                  
-          ToTensor(normalize=imagenet_stats)
+          ToTensor(normalize=self.imagenet_stats)
           ])
