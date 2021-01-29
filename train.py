@@ -118,10 +118,10 @@ def fit(epochs=hyparam['max_epochs'],model=None,train_dl=None,valid_dl=None,opt=
     sendtome = ['tanishgupta34@gmail.com']
     contents = open(f'log.txt').readlines()
     yag = yagmail.SMTP(user = 'labsc202@gmail.com' , password = 'labelsmooth1')
-    yag.send(to = sendtome , subject = 'Knock Knock Model has trained !!',contents = contents ,attachments=['log.txt','logger.txt'])
+    yag.send(to = sendtome , subject = 'Knock Knock Model has trained !!',contents = contents ,attachments=['log.txt'])
     return model
 
 train_dl,valid_dl = get_data(train_df,valid_df,train_tfms,test_tfms)
-model,opt = get_model(model_name='efficientnet-b3',lr=hyparam['lr'],wd=hyparam['weight_decay'])
+model,opt = get_model(model_name=hyparam['model_name'],lr=hyparam['lr'],wd=hyparam['weight_decay'])
 
 model = fit(model=model,train_dl=train_dl,valid_dl=valid_dl,opt=opt)
