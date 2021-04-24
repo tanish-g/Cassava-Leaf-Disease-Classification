@@ -119,6 +119,7 @@ def fit(epochs=hyparam['max_epochs'],model=None,train_dl=None,valid_dl=None,opt=
     contents = open(f'log.txt').readlines()
     yag = yagmail.SMTP(user = 'labsc202@gmail.com' , password = 'labelsmooth1')
     yag.send(to = sendtome , subject = 'Knock Knock Model has trained !!',contents = contents ,attachments=['log.txt'])
+    del train_dl,valid_dl,scheduler,opt
     return model
 
 train_dl,valid_dl = get_data(train_df,valid_df,train_tfms,test_tfms)
