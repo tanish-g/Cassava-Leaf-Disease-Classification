@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 class leafEfficientNet(nn.Module):
     def __init__(self,model_name='efficientnet-b0',pool_type=F.adaptive_avg_pool2d):
-        super().__init__()
+        super(leaf_model, self).__init__()
         self.pool_type = pool_type
         self.backbone = EfficientNet.from_pretrained(model_name,num_classes=5)
 #         in_features = getattr(self.backbone,'_fc').in_features
